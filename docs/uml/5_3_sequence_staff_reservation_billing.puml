@@ -1,0 +1,103 @@
+@startuml
+title Ocean View Resort - Sequence Diagram (Staff Reservation and Billing Flow)
+
+' A4 landscape-oriented layout tuning
+scale max 1600 width
+skinparam dpi 150
+skinparam maxMessageSize 90
+skinparam ParticipantPadding 18
+skinparam BoxPadding 8
+skinparam ArrowThickness 1
+hide footbox
+
+actor Staff
+boundary "Staff Reservation Page\n(staff/reservations.jsp)" as ResUI
+control "StaffReservationServlet" as ResController
+control "ReservationService" as ReservationService
+entity "GuestProfileDAO" as GuestDAO
+entity "RoomDAO" as RoomDAO
+entity "ReservationDAO" as ReservationDAO
+database "MySQL" as DB
+
+boundary "Staff Billing Page\n(staff/billing.jsp)" as BillUI
+control "StaffBillingServlet" as BillController
+control "BillingService" as BillingService
+entity "BillDAO" as BillDAO
+
+== Create Reservation ==
+Staff -> ResUI: Fill reservation form and submit
+ResUI -> ResController: POST /staff/reservations\n(action=create, guestId, roomId, dates, guests)
+
+ResController -> GuestDAO: findById(guestId)
+GuestDAO -> DB: SELECT guest profile
+DB --> GuestDAO: guest row
+GuestDAO --> ResController: guest exists
+
+ResController -> RoomDAO: findById(roomId)
+RoomDAO -> DB: SELECT room
+DB --> RoomDAO: room row
+RoomDAO --> ResController: room exists
+
+ResController -> ReservationService: validateForCreateOrUpdate(...)
+ReservationService --> ResController: validation passed
+
+ResController -> ReservationDAO: existsOverlappingReservation(roomId, checkIn, checkOut, null)
+ReservationDAO -> DB: SELECT COUNT(*) overlap check
+DB --> ReservationDAO: overlap count
+ReservationDAO --> ResController: overlap result
+
+alt Overlap found
+  ResController -> ResUI: Redirect with error message
+else No overlap
+  ResController -> ReservationDAO: create(reservation)
+  ReservationDAO -> DB: INSERT reservation
+  DB --> ReservationDAO: created id
+  ReservationDAO --> ResController: success
+  ResController -> ResUI: Redirect with success message
+end
+
+== Check-In Flow ==
+Staff -> ResUI: Click check-in for reservation
+ResUI -> ResController: POST /staff/reservations\n(action=checkin, id)
+
+ResController -> ReservationDAO: findById(id)
+ReservationDAO -> DB: SELECT reservation
+DB --> ReservationDAO: reservation row
+ReservationDAO --> ResController: reservation
+
+ResController -> ReservationService: ensureCheckInAllowed(currentStatus)
+ReservationService --> ResController: allowed
+
+ResController -> ReservationDAO: update(status=CHECKED_IN)
+ReservationDAO -> DB: UPDATE reservations
+DB --> ReservationDAO: updated
+
+ResController -> RoomDAO: update(room.status=OCCUPIED)
+RoomDAO -> DB: UPDATE rooms
+DB --> RoomDAO: updated
+
+ResController -> ResUI: Redirect with success message
+
+== Generate Bill ==
+Staff -> BillUI: Fill billing form and submit
+BillUI -> BillController: POST /staff/billing\n(action=create, reservationId, subtotal, tax, discount, status)
+
+BillController -> ReservationDAO: findById(reservationId)
+ReservationDAO -> DB: SELECT reservation
+DB --> ReservationDAO: reservation row
+ReservationDAO --> BillController: reservation exists
+
+BillController -> BillingService: validateForCreateOrUpdate(...)
+BillingService --> BillController: validation passed
+
+BillController -> BillingService: calculateTotal(subtotal, tax, discount)
+BillingService --> BillController: total
+
+BillController -> BillDAO: create(bill)
+BillDAO -> DB: INSERT bill
+DB --> BillDAO: created id
+BillDAO --> BillController: success
+
+BillController -> BillUI: Redirect with success message
+
+@enduml

@@ -1,0 +1,46 @@
+@startuml
+title Ocean View Resort - UML Component Diagram
+
+' A4 landscape-oriented layout tuning
+skinparam componentStyle rectangle
+left to right direction
+scale max 1600 width
+skinparam dpi 150
+skinparam ranksep 70
+skinparam nodesep 35
+skinparam linetype ortho
+
+actor "Admin / Staff / Guest" as User
+
+node "Client Layer" {
+  component "JSP Views\n(common, admin, staff, guest)" as JSP
+  component "Client Scripts\n(validation.js, charts.js)" as ClientJS
+  component "Chart.js Runtime" as ChartJS
+}
+
+node "Application Layer (Tomcat)" {
+  component "Security Filters\n(AuthFilter, RoleFilter)" as Filters
+  component "Web Controllers\n(Servlets by module)" as Controllers
+  component "Reporting API\n(ReportApiServlet)" as ReportAPI
+  component "Business Services\n(RegisterService,\nReservationService,\nBillingService)" as Services
+  component "DAO Components\n(JDBC DAO Implementations)" as DAOs
+  component "Utility Components\n(DBConnection,\nPasswordUtil,\nAuthRedirectUtil)" as Utils
+}
+
+database "MySQL Database\n(oceanview_resort)" as MySQL
+
+User --> JSP : Browser interaction
+JSP --> Filters : HTTP request
+Filters --> Controllers : allowed request
+Controllers --> Services : business operation
+Controllers --> DAOs : direct data operation
+ReportAPI --> DAOs : report data queries
+ClientJS --> ReportAPI : /api/reports/*
+ClientJS --> ChartJS : render charts
+Services --> DAOs : persistence access
+DAOs --> Utils : open JDBC connection
+Utils --> MySQL : connection setup
+DAOs --> MySQL : SQL CRUD / queries
+Controllers --> JSP : forward/redirect response
+
+@enduml

@@ -1,0 +1,224 @@
+@startuml
+title Ocean View Resort - UML Class Diagram
+
+' A4 landscape-oriented layout tuning
+left to right direction
+scale max 1600 width
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam dpi 150
+skinparam ranksep 70
+skinparam nodesep 30
+skinparam linetype ortho
+hide empty members
+
+package "Filters" as P_FILTERS {
+  class AuthFilter
+  class RoleFilter
+}
+
+package "Controllers" as P_CONTROLLERS {
+  class AuthServlet
+  class RegisterServlet
+  class DBHealthServlet
+  class AdminDashboardServlet
+  class ManageUsersServlet
+  class ManageRoomTypesServlet
+  class ManageRoomsServlet
+  class StaffDashboardServlet
+  class StaffReservationServlet
+  class StaffBillingServlet
+  abstract class GuestBaseServlet
+  class GuestDashboardServlet
+  class GuestReservationServlet
+  class GuestBillServlet
+  class ReportApiServlet
+}
+
+package "Services" as P_SERVICES {
+  class RegisterService
+  class ReservationService
+  class BillingService
+}
+
+package "DAO Interfaces" as P_DAOI {
+  interface UserDAO
+  interface GuestProfileDAO
+  interface RoomTypeDAO
+  interface RoomDAO
+  interface ReservationDAO
+  interface BillDAO
+}
+
+package "DAO Implementations" as P_DAO_IMPL {
+  class UserJdbcDAO
+  class GuestProfileJdbcDAO
+  class RoomTypeJdbcDAO
+  class RoomJdbcDAO
+  class ReservationJdbcDAO
+  class BillJdbcDAO
+}
+
+package "Domain Model" as P_DOMAIN {
+  class User {
+    +id: Long
+    +username: String
+    +passwordHash: String
+    +role: String
+    +status: String
+  }
+
+  class GuestProfile {
+    +id: Long
+    +userId: Long
+    +fullName: String
+    +email: String
+    +phone: String
+  }
+
+  class RoomType {
+    +id: Long
+    +name: String
+    +basePrice: BigDecimal
+    +capacity: int
+  }
+
+  class Room {
+    +id: Long
+    +roomNumber: String
+    +roomTypeId: Long
+    +status: String
+  }
+
+  class Reservation {
+    +id: Long
+    +guestId: Long
+    +roomId: Long
+    +checkIn: LocalDate
+    +checkOut: LocalDate
+    +status: String
+  }
+
+  class Bill {
+    +id: Long
+    +reservationId: Long
+    +total: BigDecimal
+    +paymentStatus: String
+  }
+}
+
+package "Utilities" as P_UTILS {
+  class DBConnection
+  class PasswordUtil
+  class AuthRedirectUtil
+  class AuthConstants
+}
+
+package "Exceptions" as P_EXCEPTIONS {
+  class DataAccessException
+  class ValidationException
+}
+
+' Horizontal package anchors for landscape output
+P_FILTERS -[hidden]right- P_CONTROLLERS
+P_CONTROLLERS -[hidden]right- P_SERVICES
+P_SERVICES -[hidden]right- P_DAOI
+P_DAOI -[hidden]right- P_DAO_IMPL
+P_DAO_IMPL -[hidden]right- P_DOMAIN
+P_DOMAIN -[hidden]right- P_UTILS
+P_UTILS -[hidden]right- P_EXCEPTIONS
+
+' Inheritance
+GuestDashboardServlet --|> GuestBaseServlet
+GuestReservationServlet --|> GuestBaseServlet
+GuestBillServlet --|> GuestBaseServlet
+
+' DAO implementation bindings
+UserJdbcDAO ..|> UserDAO
+GuestProfileJdbcDAO ..|> GuestProfileDAO
+RoomTypeJdbcDAO ..|> RoomTypeDAO
+RoomJdbcDAO ..|> RoomDAO
+ReservationJdbcDAO ..|> ReservationDAO
+BillJdbcDAO ..|> BillDAO
+
+' Controller dependencies
+AuthServlet ..> UserDAO
+AuthServlet ..> PasswordUtil
+AuthServlet ..> AuthRedirectUtil
+AuthServlet ..> AuthConstants
+
+RegisterServlet ..> UserDAO
+RegisterServlet ..> GuestProfileDAO
+RegisterServlet ..> RegisterService
+RegisterServlet ..> AuthRedirectUtil
+RegisterServlet ..> AuthConstants
+
+ManageUsersServlet ..> UserDAO
+ManageUsersServlet ..> PasswordUtil
+
+ManageRoomTypesServlet ..> RoomTypeDAO
+ManageRoomsServlet ..> RoomDAO
+ManageRoomsServlet ..> RoomTypeDAO
+
+StaffReservationServlet ..> ReservationDAO
+StaffReservationServlet ..> GuestProfileDAO
+StaffReservationServlet ..> RoomDAO
+StaffReservationServlet ..> ReservationService
+StaffReservationServlet ..> AuthConstants
+
+StaffBillingServlet ..> BillDAO
+StaffBillingServlet ..> ReservationDAO
+StaffBillingServlet ..> BillingService
+StaffBillingServlet ..> AuthConstants
+
+GuestBaseServlet ..> GuestProfileDAO
+GuestBaseServlet ..> AuthConstants
+GuestReservationServlet ..> ReservationService
+GuestReservationServlet ..> ReservationDAO
+GuestReservationServlet ..> RoomDAO
+GuestBillServlet ..> BillDAO
+GuestBillServlet ..> ReservationDAO
+GuestBillServlet ..> RoomDAO
+GuestDashboardServlet ..> ReservationDAO
+GuestDashboardServlet ..> BillDAO
+
+AdminDashboardServlet ..> UserDAO
+AdminDashboardServlet ..> RoomDAO
+AdminDashboardServlet ..> ReservationDAO
+AdminDashboardServlet ..> BillDAO
+StaffDashboardServlet ..> ReservationDAO
+StaffDashboardServlet ..> BillDAO
+
+ReportApiServlet ..> UserDAO
+ReportApiServlet ..> RoomDAO
+ReportApiServlet ..> ReservationDAO
+ReportApiServlet ..> BillDAO
+ReportApiServlet ..> GuestProfileDAO
+ReportApiServlet ..> AuthConstants
+
+DBHealthServlet ..> DBConnection
+AuthFilter ..> AuthConstants
+RoleFilter ..> AuthConstants
+
+' Service dependencies
+RegisterService ..> PasswordUtil
+ReservationService ..> ValidationException
+BillingService ..> ValidationException
+
+' DAO infrastructure
+UserJdbcDAO ..> DBConnection
+GuestProfileJdbcDAO ..> DBConnection
+RoomTypeJdbcDAO ..> DBConnection
+RoomJdbcDAO ..> DBConnection
+ReservationJdbcDAO ..> DBConnection
+BillJdbcDAO ..> DBConnection
+
+' Domain associations
+GuestProfile "1" --> "1" User : belongs to
+Room "*" --> "1" RoomType : typed as
+Reservation "*" --> "1" GuestProfile : booked for
+Reservation "*" --> "1" Room : allocated to
+Bill "*" --> "1" Reservation : billed for
+Bill "*" --> "1" User : issued by
+
+@enduml
