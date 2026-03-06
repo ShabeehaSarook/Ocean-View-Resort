@@ -1,0 +1,126 @@
+  <script>
+    (function () {
+      function refreshVisibleCount(tableSelector, countTarget) {
+        if (!tableSelector || !countTarget) {
+          return;
+        }
+        var table = document.querySelector(tableSelector);
+        var target = document.querySelector(countTarget);
+        if (!table || !target) {
+          return;
+        }
+        var rows = table.querySelectorAll('tbody tr');
+        var visible = 0;
+        rows.forEach(function (row) {
+          if (!row.classList.contains('crud-hidden')) {
+            visible += 1;
+          }
+        });
+        target.textContent = visible + ' record(s)';
+      }
+
+      function initCrudFilters() {
+        document.querySelectorAll('[data-crud-filter-input]').forEach(function (input) {
+          var tableSelector = input.getAttribute('data-crud-filter-input');
+          var countTarget = input.getAttribute('data-crud-count-target');
+          var clearSelector = input.getAttribute('data-crud-clear-target');
+          var table = document.querySelector(tableSelector);
+          if (!table) {
+            return;
+          }
+
+          function applyFilter() {
+            var keyword = (input.value || '').trim().toLowerCase();
+            table.querySelectorAll('tbody tr').forEach(function (row) {
+              var rowText = (row.textContent || '').toLowerCase();
+              row.classList.toggle('crud-hidden', keyword.length > 0 && rowText.indexOf(keyword) === -1);
+            });
+            refreshVisibleCount(tableSelector, countTarget);
+          }
+
+          input.addEventListener('input', applyFilter);
+
+          if (clearSelector) {
+            var clearButton = document.querySelector(clearSelector);
+            if (clearButton) {
+              clearButton.addEventListener('click', function () {
+                input.value = '';
+                applyFilter();
+                input.focus();
+              });
+            }
+          }
+
+          applyFilter();
+        });
+      }
+
+      function initCrudConfirmations() {
+        document.querySelectorAll('[data-crud-confirm]').forEach(function (form) {
+          form.addEventListener('submit', function (event) {
+            var message = form.getAttribute('data-crud-confirm') || 'Are you sure?';
+            if (!window.confirm(message)) {
+              event.preventDefault();
+            }
+          });
+        });
+      }
+
+      function initBillTotalPreview() {
+        document.querySelectorAll('.js-bill-form').forEach(function (form) {
+          var subtotalInput = form.querySelector('input[name="subtotal"]');
+          var taxInput = form.querySelector('input[name="tax"]');
+          var discountInput = form.querySelector('input[name="discount"]');
+          var totalTarget = form.querySelector('[data-bill-total]');
+
+          if (!subtotalInput || !taxInput || !discountInput || !totalTarget) {
+            return;
+          }
+
+          function valueOf(input) {
+            var value = parseFloat(input.value);
+            return Number.isNaN(value) ? 0 : value;
+          }
+
+          function updateTotal() {
+            var total = valueOf(subtotalInput) + valueOf(taxInput) - valueOf(discountInput);
+            totalTarget.textContent = total.toFixed(2);
+          }
+
+          ['input', 'change'].forEach(function (eventName) {
+            subtotalInput.addEventListener(eventName, updateTotal);
+            taxInput.addEventListener(eventName, updateTotal);
+            discountInput.addEventListener(eventName, updateTotal);
+          });
+          updateTotal();
+        });
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        initCrudFilters();
+        initCrudConfirmations();
+        initBillTotalPreview();
+      });
+    })();
+  </script>
+  <footer class="site-footer">
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 1.1rem;">
+        <span>🏖️</span>
+        <span style="font-weight: 600; color: var(--primary);">Ocean View Resort</span>
+      </div>
+      <div style="font-size: 0.85rem; color: var(--muted);">
+        Resort Management System &copy; 2026
+      </div>
+      <div style="font-size: 0.8rem; color: var(--muted); display: flex; gap: 12px;">
+        <span>📞 Contact</span>
+        <span>|</span>
+        <span>📧 Support</span>
+        <span>|</span>
+        <span>ℹ️ Help</span>
+      </div>
+    </div>
+  </footer>
+</div>
+</body>
+</html>

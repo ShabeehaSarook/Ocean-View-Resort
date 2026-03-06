@@ -1,0 +1,245 @@
+<%@ taglib prefix="c" uri="jakarta.tags.core" %>
+<%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><c:out value="${empty param.pageTitle ? 'Ocean View Resort' : param.pageTitle}"/></title>
+  <link id="ovrAppCss" rel="stylesheet" href="${pageContext.request.contextPath}/assets/css/app.css?v=20260303">
+  <script>
+    (function () {
+      var link = document.getElementById('ovrAppCss');
+      if (!link) {
+        return;
+      }
+
+      var href = link.getAttribute('href') || '';
+      if (href.indexOf('pageContext.request.contextPath') === -1) {
+        return;
+      }
+
+      var path = window.location.pathname || '/';
+      var segments = path.split('/').filter(function (part) {
+        return part.length > 0;
+      });
+
+      var reservedRoots = ['admin', 'staff', 'guest', 'login', 'logout', 'register', 'health', 'assets'];
+      var first = segments.length > 0 ? segments[0].toLowerCase() : '';
+      var contextPath = '';
+      if (first && reservedRoots.indexOf(first) === -1) {
+        contextPath = '/' + segments[0];
+      }
+
+      link.setAttribute('href', contextPath + '/assets/css/app.css?v=20260303');
+    })();
+  </script>
+  <c:if test="${param.includeChartJs == 'true'}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </c:if>
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --bg-gradient-start: #e3f2fd;
+      --bg-gradient-end: #f1f8ff;
+      --surface: #ffffff;
+      --surface-alt: #f8fafc;
+      --text: #1e293b;
+      --text-light: #475569;
+      --muted: #64748b;
+      --primary: #0891b2;
+      --primary-light: #06b6d4;
+      --primary-dark: #0e7490;
+      --primary-strong: #155e75;
+      --danger: #dc2626;
+      --danger-light: #fef2f2;
+      --danger-dark: #991b1b;
+      --success: #059669;
+      --success-light: #ecfdf5;
+      --success-dark: #047857;
+      --warning: #f59e0b;
+      --warning-light: #fffbeb;
+      --warning-dark: #d97706;
+      --info: #3b82f6;
+      --info-light: #eff6ff;
+      --info-dark: #2563eb;
+      --border: #e2e8f0;
+      --border-light: #f1f5f9;
+      --border-dark: #cbd5e1;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      --shadow-md: 0 4px 15px rgba(0, 0, 0, 0.08);
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.05);
+      --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.15);
+      --focus-ring: 0 0 0 3px rgba(8, 145, 178, 0.2);
+      --navbar-bg: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+      --navbar-text: #ffffff;
+      --navbar-hover: rgba(255, 255, 255, 0.15);
+      --navbar-active: rgba(255, 255, 255, 0.25);
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg) 45%, var(--bg-gradient-end) 100%);
+      min-height: 100vh;
+    }
+
+    .page-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 20px 16px 36px;
+    }
+
+    .site-header {
+      background: var(--navbar-bg);
+      border: none;
+      border-radius: 16px;
+      box-shadow: var(--shadow-lg);
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 8px;
+    }
+
+    .panel,
+    .top-nav,
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .brand-link {
+      color: var(--navbar-text);
+      text-decoration: none;
+      font-size: 1.3rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .brand-link:hover {
+      text-decoration: none;
+    }
+
+    .brand-icon {
+      font-size: 2rem;
+    }
+
+    .brand-subtitle {
+      margin: 4px 0 0;
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 0.9rem;
+      font-weight: 400;
+    }
+
+    .content {
+      margin-top: 16px;
+    }
+
+    .auth-layout {
+      max-width: 760px;
+      margin: 18px auto 0;
+    }
+
+    .form-actions {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .btn,
+    button {
+      display: inline-block;
+      border: 1px solid var(--primary);
+      background: var(--primary);
+      color: #fff;
+      border-radius: 8px;
+      padding: 8px 12px;
+      cursor: pointer;
+      font-weight: 600;
+      text-decoration: none;
+      font: inherit;
+    }
+
+    .btn-secondary {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--border);
+    }
+
+    .notice {
+      margin: 10px 0;
+      padding: 10px 12px;
+      border: 1px solid;
+      border-radius: 8px;
+      font-size: 0.95rem;
+    }
+
+    .notice-error {
+      color: var(--danger);
+      background: #fff4f3;
+      border-color: #fecaca;
+    }
+
+    .notice-success {
+      color: var(--success);
+      background: #ecfdf3;
+      border-color: #b7ebcf;
+    }
+
+    .crud-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin: 12px 0;
+    }
+
+    .crud-toolbar input[type="search"] {
+      max-width: 340px;
+    }
+
+    .crud-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .crud-total-preview {
+      margin-top: 8px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .crud-hidden {
+      display: none;
+    }
+  </style>
+  <script defer src="${pageContext.request.contextPath}/assets/js/validation.js"></script>
+  <script defer src="${pageContext.request.contextPath}/assets/js/charts.js"></script>
+</head>
+<body>
+<div class="page-shell">
+  <header class="site-header">
+    <div>
+      <a class="brand-link" href="${pageContext.request.contextPath}/">
+        <span class="brand-icon">🏖️</span>
+        <span>Ocean View Resort</span>
+      </a>
+      <p class="brand-subtitle"><c:out value="${empty param.pageHeading ? 'Resort Management System' : param.pageHeading}"/></p>
+    </div>
+    <c:if test="${not empty sessionScope.authUser}">
+      <div class="session-pill">
+        <span style="font-size: 1.2rem;">👤</span>
+        <span style="font-weight: 600;"><c:out value="${sessionScope.authUser.username}"/></span>
+        <span class="role-badge role-${fn:toLowerCase(sessionScope.authUser.role)}"><c:out value="${sessionScope.authUser.role}"/></span>
+      </div>
+    </c:if>
+  </header>
